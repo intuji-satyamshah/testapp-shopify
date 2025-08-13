@@ -7,13 +7,34 @@ import {
   BlockStack,
   InlineGrid,
   TextField,
-  Divider,
-  useBreakpoints,
+  Button,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import { useState } from "react";
+import { Form, useLoaderData } from "@remix-run/react";
+import type { Settings } from "app/types/settings";
+
+export async function loader() {
+  // get the data from db
+  let settings = {
+    name: "Product Size Chart updated",
+    description: "A Shopify app to generate product size charts",
+  };
+  return settings;
+}
+
+
+export async function action({request}: { request: Request }) {
+  // updates persistent data
+  let formData = await request.formData();
+  const settings = Object.fromEntries(formData) as Record<string, FormDataEntryValue>;
+  return settings;
+}
 
 export default function SettingsPage() {
-  const { smUp } = useBreakpoints();
+  const settings: Settings = useLoaderData();
+  const [formState, setFormState] = useState(settings);
+
   return (
     <Page>
       <TitleBar title="Settings page" />
@@ -36,10 +57,13 @@ export default function SettingsPage() {
             </BlockStack>
           </Box>
           <Card roundedAbove="sm">
-            <BlockStack gap="400">
-              <TextField label="App name" />
-              <TextField label="Description" />
-            </BlockStack>
+            <Form method="post">
+              <BlockStack gap="400">
+                <TextField autoComplete="off" label="App name" name="name" value={formState.name} onChange={(value) => setFormState({...formState, name:value})} />
+                <TextField autoComplete="off" label="Description" name="description" value={formState.description} onChange={(value) => setFormState({...formState, description:value})}/>
+                <Button submit={true}> Save settings </Button>
+              </BlockStack>
+            </Form>
           </Card>
         </InlineGrid>
       </BlockStack>
